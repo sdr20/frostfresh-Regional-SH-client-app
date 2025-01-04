@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "705174620428",
+    "project_id": "frostfresh-7de8e",
+    "storage_bucket": "frostfresh-7de8e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:705174620428:android:ff37328f89fd7f06096129",
+        "android_client_info": {
+          "package_name": "com.example.frostfresh"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCngMKmeOiCCKomLoPXbVW_SVEi0sQeUIA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
