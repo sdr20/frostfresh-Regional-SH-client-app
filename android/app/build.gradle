@@ -1,15 +1,25 @@
 plugins {
     id "com.android.application"
     id "kotlin-android"
-    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id "dev.flutter.flutter-gradle-plugin"
     id "com.google.gms.google-services"
 }
 
 android {
     namespace = "com.example.frostfresh"
-    compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    compileSdk = 34 
+    ndkVersion = "25.2.9519653" // Update based on your requirements or remove if unused
+
+    defaultConfig {
+        applicationId = "com.example.frostfresh"
+        minSdk = 21 // Minimum SDK version
+        targetSdk = 33 // Target SDK version
+        versionCode = 1
+        versionName = "1.0"
+
+        // Enable support for multidex if required
+        multiDexEnabled = true
+    }
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
@@ -20,30 +30,28 @@ android {
         jvmTarget = "1.8"
     }
 
-    defaultConfig {
-        applicationId = "com.example.frostfresh"
-        minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
-        versionCode = flutter.versionCode
-        versionName = flutter.versionName
-    }
-
     buildTypes {
         release {
-            // Replace with your release signing configuration if available
-            signingConfig = signingConfigs.debug
+            // Enable ProGuard (or R8) for code shrinking and optimization
+            minifyEnabled true // Required for shrinkResources
+            shrinkResources true // Enable resource shrinking
+
+            // Use the default ProGuard rules file or provide your custom file
+            proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
+        }
+
+        debug {
+            // Disable shrinking for debug builds
+            minifyEnabled false
+            shrinkResources false
         }
     }
 }
 
-flutter {
-    source = "../.."
-}
-
 dependencies {
-    // Import the Firebase BoM
-    implementation(platform("com.google.firebase:firebase-bom:33.7.0"))
+    implementation platform("com.google.firebase:firebase-bom:33.7.0")
+    implementation "androidx.multidex:multidex:2.0.1" // For multidex support if needed
 
-    // Add dependencies for Firebase products as needed
-    // Example: implementation "com.google.firebase:firebase-analytics"
+    // Add Firebase dependencies as needed
+    // Example: implementation "com.google.firebase:firebase-analytics-ktx"
 }

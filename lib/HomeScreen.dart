@@ -246,7 +246,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
 appBar: AppBar(
   title: Text('Frost Fresh'),
-  centerTitle: true, // This centers the title
+  centerTitle: true, 
   elevation: 0,
   backgroundColor: Colors.white,
   foregroundColor: Colors.black,
@@ -254,7 +254,7 @@ appBar: AppBar(
     IconButton(
       icon: Icon(Icons.settings),
       onPressed: () {
-        // Add settings functionality here
+        // settings functionality 
       },
     ),
   ],
