@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_database/firebase_database.dart';
-import 'homescreen.dart'; // Ensure this path is correct
+import 'homescreen.dart'; 
 
-// Replace these values with your own Firebase project settings
+
 const String apiKey = "AIzaSyDtTtKcyvDlBdLze4qytggyC0GsIPQZB4k";
 const String authDomain = "frostfresh-7de8e.firebaseapp.com";
 const String databaseURL = "https://frostfresh-7de8e-default-rtdb.asia-southeast1.firebasedatabase.app";
@@ -15,7 +15,7 @@ const String appId = "1:705174620428:web:81ade7ebdfc887a5096129";
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Firebase initialization with manual credentials
+
   await Firebase.initializeApp(
     options: FirebaseOptions(
       apiKey: apiKey,
@@ -37,7 +37,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
        debugShowCheckedModeBanner: false,
       title: 'Sensor App',
-      home: HomeScreen(), // Reference to HomeScreen
+      home: HomeScreen(), 
     );
   }
 }
