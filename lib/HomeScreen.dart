@@ -248,20 +248,20 @@ appBar: AppBar(
   title: Text('Frost Fresh'),
   centerTitle: true, 
   elevation: 0,
-  backgroundColor: Colors.white,
+  backgroundColor: const Color.fromARGB(255, 251, 253, 255),
   foregroundColor: Colors.black,
   actions: [
     IconButton(
       icon: Icon(Icons.settings),
       onPressed: () {
-        // settings functionality 
+        // settings functionality here
       },
     ),
   ],
 ),
 
       body: Container(
-        color: Colors.grey[100],
+        color: const Color.fromARGB(255, 234, 243, 255),
         child: ListView(
           padding: EdgeInsets.all(16),
           children: [
