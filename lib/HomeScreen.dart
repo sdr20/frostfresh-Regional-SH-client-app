@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_database/firebase_database.dart';
+import 'firebase_service.dart'; // Import the FirebaseService
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -7,7 +7,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final DatabaseReference dbRef = FirebaseDatabase.instance.ref();
+  final FirebaseService _firebaseService = FirebaseService();
   double temperature = 0.0;
   double ethylene = 0.0;
   
@@ -19,15 +19,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    dbRef.onValue.listen((event) {
-      final data = event.snapshot.value as Map<dynamic, dynamic>?;
-      if (data != null) {
-        setState(() {
-          temperature = data['temperature'] ?? 0.0;
-          ethylene = data['ethylene'] ?? 0.0;
-        });
-      }
-    });
+    // No need to listen here since StreamBuilder will handle it
   }
 
   void _showWarningDialog(String message) {
@@ -46,7 +38,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildThermometer() {
+  Widget _buildThermometer(double temperature) {
     Color tempColor = temperature >= 60 
         ? Colors.red 
         : temperature <= 30 
@@ -56,11 +48,11 @@ class _HomeScreenState extends State<HomeScreen> {
     return Container(
       padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Colors.grey[850], // Dark background color
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.2),
+            color: Colors.grey.withOpacity(0.4),
             spreadRadius: 2,
             blurRadius: 5,
           ),
@@ -73,6 +65,7 @@ class _HomeScreenState extends State<HomeScreen> {
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
+              color: Colors.white, // White text for dark mode
             ),
           ),
           SizedBox(height: 10),
@@ -83,7 +76,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 width: 40,
                 height: 200,
                 decoration: BoxDecoration(
-                  color: Colors.grey[200],
+                  color: Colors.grey[600],
                   borderRadius: BorderRadius.circular(20),
                 ),
               ),
@@ -105,6 +98,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
+                    color: Colors.white, // White text for dark mode
                   ),
                 ),
               ),
@@ -158,15 +152,15 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildEthyleneSensor() {
+  Widget _buildEthyleneSensor(double ethylene) {
     return Container(
       padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Colors.grey[850], // Dark background color
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.2),
+            color: Colors.grey.withOpacity(0.4),
             spreadRadius: 2,
             blurRadius: 5,
           ),
@@ -179,6 +173,7 @@ class _HomeScreenState extends State<HomeScreen> {
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
+              color: Colors.white, // White text for dark mode
             ),
           ),
           SizedBox(height: 20),
@@ -190,7 +185,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 height: 200,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Colors.grey[200],
+                  color: Colors.grey[600],
                 ),
                 child: Center(
                   child: Text(
@@ -244,31 +239,51 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-appBar: AppBar(
-  title: Text('Frost Fresh'),
-  centerTitle: true, 
-  elevation: 0,
-  backgroundColor: const Color.fromARGB(255, 251, 253, 255),
-  foregroundColor: Colors.black,
-  actions: [
-    IconButton(
-      icon: Icon(Icons.settings),
-      onPressed: () {
-        // settings functionality here
-      },
-    ),
-  ],
-),
-
+      appBar: AppBar(
+        title: Text('Frost Fresh'),
+        centerTitle: true, 
+        elevation: 0,
+        backgroundColor: Colors.black, // Dark background for AppBar
+        foregroundColor: Colors.white, // White text in AppBar
+        actions: [
+          IconButton(
+            icon: Icon(Icons.settings),
+            onPressed: () {
+              // settings functionality here
+            },
+          ),
+        ],
+      ),
       body: Container(
-        color: const Color.fromARGB(255, 234, 243, 255),
-        child: ListView(
-          padding: EdgeInsets.all(16),
-          children: [
-            _buildThermometer(),
-            SizedBox(height: 20),
-            _buildEthyleneSensor(),
-          ],
+        color: Colors.black, // Dark background color
+        child: StreamBuilder<Map<String, dynamic>>(
+          stream: _firebaseService.getSensorData(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return Center(child: CircularProgressIndicator());
+            }
+
+            if (snapshot.hasError) {
+              return Center(child: Text('Error: ${snapshot.error}', style: TextStyle(color: Colors.white)));
+            }
+
+            if (snapshot.hasData) {
+              final data = snapshot.data!;
+              temperature = data['temperature'];
+              ethylene = data['ethylene'];
+
+              return ListView(
+                padding: EdgeInsets.all(16),
+                children: [
+                  _buildThermometer(temperature),
+                  SizedBox(height: 20),
+                  _buildEthyleneSensor(ethylene),
+                ],
+              );
+            }
+
+            return Center(child: Text('No data available', style: TextStyle(color: Colors.white)));
+          },
         ),
       ),
     );
