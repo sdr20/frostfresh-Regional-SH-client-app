@@ -136,14 +136,30 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
-  intl:
+  http:
     dependency: transitive
     description:
-      name: intl
-      sha256: d6f56758b7d3014a48af9701c085700aac781a92a87a62b1333b46d8879661cf
+      name: http
+      sha256: fe7ab022b76f3034adc518fb6ea04a82387620e19977665ea18d30a1cf43442f
       url: "https://pub.dev"
     source: hosted
-    version: "0.19.0"
+    version: "1.3.0"
+  http_parser:
+    dependency: transitive
+    description:
+      name: http_parser
+      sha256: "178d74305e7866013777bab2c3d8726205dc5a4dd935297175b19a23a2e66571"
+      url: "https://pub.dev"
+    source: hosted
+    version: "4.1.2"
+  intl:
+    dependency: "direct main"
+    description:
+      name: intl
+      sha256: "00f33b908655e606b86d2ade4710a231b802eec6f11e87e4ea3783fd72077a50"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.20.1"
   leak_tracker:
     dependency: transitive
     description:
@@ -273,18 +289,18 @@ packages:
     dependency: transitive
     description:
       name: syncfusion_flutter_core
-      sha256: aa526af3b07691a25ea2700991a6a333ef35abfb6e6679002a26d13d1baa138a
+      sha256: "324e6d370de025e5594c60fa60665efa700f34009c2b7859d05e843c357cd5c8"
       url: "https://pub.dev"
     source: hosted
-    version: "28.1.37"
+    version: "28.1.41"
   syncfusion_flutter_gauges:
     dependency: "direct main"
     description:
       name: syncfusion_flutter_gauges
-      sha256: c97e654ca95e4cf89ee573f6c67b78d74c2216fe440c929e51f343a6b43bc2a8
+      sha256: "93f4abd9ce0178879588508aaed1db023eb05cefb2e5ecb39764e7cc876be65d"
       url: "https://pub.dev"
     source: hosted
-    version: "28.1.37"
+    version: "28.1.41"
   term_glyph:
     dependency: transitive
     description:
@@ -301,6 +317,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.7.3"
+  typed_data:
+    dependency: transitive
+    description:
+      name: typed_data
+      sha256: f9049c039ebfeb4cf7a7104a675823cd72dba8297f264b6637062516699fa006
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.4.0"
   vector_math:
     dependency: transitive
     description:

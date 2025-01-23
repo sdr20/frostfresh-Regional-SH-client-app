@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'firebase_service.dart'; // Import the FirebaseService
+import 'package:intl/intl.dart';
+import 'package:syncfusion_flutter_gauges/gauges.dart';
+import 'analytics_service.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -7,284 +9,362 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final FirebaseService _firebaseService = FirebaseService();
-  double temperature = 0.0;
-  double ethylene = 0.0;
-  
-  // Editable warning messages
-  String lowTempMessage = "Temperature is too low! Please check the cooling system.";
-  String highTempMessage = "DANGER: Temperature is critically high! Immediate action required.";
-  String ethyleneWarningMessage = "Ethylene detected! Ensure proper ventilation and check for ripening produce.";
+  final AnalyticsService _analyticsService = AnalyticsService();
+  DateTime _selectedDate = DateTime.now();
+  Map<String, dynamic> _dailySummary = {};
+  List<Map<String, dynamic>> _logs = [];
+  final double ethyleneThreshold = 5.0; // Define your ethylene threshold here
 
   @override
   void initState() {
     super.initState();
-    // No need to listen here since StreamBuilder will handle it
+    // Initial fetch can be removed if you want it to be fetched only on button press
+    //_fetchDailySummary();
   }
 
-  void _showWarningDialog(String message) {
+  Future<void> _fetchDailySummary() async {
+    final formattedDate = DateFormat('yyyy-MM-dd').format(_selectedDate);
+
+    setState(() {
+      _dailySummary = {
+        'averageTemperature': 0.0,
+        'averageEthylene': 0.0,
+        'maxTemperature': 0.0,
+        'minTemperature': 0.0,
+        'maxEthylene': 0.0,
+        'minEthylene': 0.0,
+      };
+    });
+
+    final summary = await _analyticsService.getDailySummary(formattedDate);
+    final logs = await _analyticsService.getTemperatureLogs(formattedDate);
+
+    setState(() {
+      _dailySummary = summary;
+      _logs = logs;
+    });
+
+    _checkEthyleneLevels();
+  }
+
+  void _checkEthyleneLevels() {
+    if (_dailySummary['maxEthylene'] != null && _dailySummary['maxEthylene'] > ethyleneThreshold) {
+      _showWarningDialog();
+    }
+  }
+
+  void _showWarningDialog() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Warning'),
-        content: Text(message),
-        actions: [
-          TextButton(
-            child: Text('OK'),
-            onPressed: () => Navigator.pop(context),
-          ),
-        ],
-      ),
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Warning"),
+          content: Text("High levels of ethylene detected!"),
+          actions: [
+            TextButton(
+              child: Text("OK"),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 
-  Widget _buildThermometer(double temperature) {
-    Color tempColor = temperature >= 60 
-        ? Colors.red 
-        : temperature <= 30 
-            ? Colors.blue 
-            : Colors.orange;
-    
-    return Container(
-      padding: EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.grey[850], // Dark background color
-        borderRadius: BorderRadius.circular(15),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.4),
-            spreadRadius: 2,
-            blurRadius: 5,
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Text(
-            'Temperature',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.white, // White text for dark mode
+  void _selectDate() async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: DateTime(2023),
+      lastDate: DateTime.now(),
+      builder: (context, child) {
+        return Theme(
+          data: ThemeData.dark().copyWith(
+            colorScheme: ColorScheme.dark(
+              primary: Colors.white,
+              onPrimary: Colors.black,
+              surface: Colors.grey[850]!,
+              onSurface: Colors.white,
             ),
+            dialogBackgroundColor: Colors.grey[850],
           ),
-          SizedBox(height: 10),
-          Stack(
-            alignment: Alignment.center,
-            children: [
-              Container(
-                width: 40,
-                height: 200,
-                decoration: BoxDecoration(
-                  color: Colors.grey[600],
-                  borderRadius: BorderRadius.circular(20),
-                ),
-              ),
-              Positioned(
-                bottom: 0,
-                child: Container(
-                  width: 40,
-                  height: (temperature / 100) * 200,
-                  decoration: BoxDecoration(
-                    color: tempColor,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                ),
-              ),
-              Positioned(
-                right: -70,
-                child: Text(
-                  '${temperature.toStringAsFixed(1)}°F',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white, // White text for dark mode
-                  ),
-                ),
-              ),
-            ],
-          ),
-          if (temperature <= 30)
-            Padding(
-              padding: EdgeInsets.only(top: 16),
-              child: InkWell(
-                onTap: () => _showWarningDialog(lowTempMessage),
-                child: Container(
-                  padding: EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.blue.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    'Low Temperature Warning',
-                    style: TextStyle(color: Colors.blue),
-                  ),
-                ),
-              ),
-            ),
-          if (temperature >= 60)
-            Padding(
-              padding: EdgeInsets.only(top: 16),
-              child: Container(
-                padding: EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.red.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.warning, color: Colors.red),
-                    SizedBox(width: 8),
-                    Text(
-                      'DANGER ZONE',
-                      style: TextStyle(
-                        color: Colors.red,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-        ],
-      ),
+          child: child!,
+        );
+      },
     );
-  }
 
-  Widget _buildEthyleneSensor(double ethylene) {
-    return Container(
-      padding: EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.grey[850], // Dark background color
-        borderRadius: BorderRadius.circular(15),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.4),
-            spreadRadius: 2,
-            blurRadius: 5,
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Text(
-            'Ethylene Level',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.white, // White text for dark mode
-            ),
-          ),
-          SizedBox(height: 20),
-          Stack(
-            alignment: Alignment.center,
-            children: [
-              Container(
-                width: 200,
-                height: 200,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.grey[600],
-                ),
-                child: Center(
-                  child: Text(
-                    ethylene.toStringAsFixed(1),
-                    style: TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                      color: ethylene > 0 ? Colors.red : Colors.green,
-                    ),
-                  ),
-                ),
-              ),
-              if (ethylene > 0)
-                Positioned(
-                  bottom: 20,
-                  child: InkWell(
-                    onTap: () => _showWarningDialog(ethyleneWarningMessage),
-                    child: Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.red.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.warning, color: Colors.red, size: 20),
-                          SizedBox(width: 8),
-                          Text(
-                            'Ethylene Detected',
-                            style: TextStyle(
-                              color: Colors.red,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        ],
-      ),
-    );
+    if (picked != null && picked != _selectedDate) {
+      setState(() {
+        _selectedDate = picked;
+      });
+      _fetchDailySummary();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Frost Fresh'),
-        centerTitle: true, 
-        elevation: 0,
-        backgroundColor: Colors.black, // Dark background for AppBar
-        foregroundColor: Colors.white, // White text in AppBar
+        title: Text(
+          'FrostFresh',
+          style: TextStyle(color: Colors.white),
+        ),
+        centerTitle: true,
+        backgroundColor: Colors.black,
         actions: [
           IconButton(
-            icon: Icon(Icons.settings),
-            onPressed: () {
-              // settings functionality here
-            },
+            icon: Icon(Icons.calendar_today),
+            onPressed: _selectDate,
           ),
         ],
       ),
-      body: Container(
-        color: Colors.black, // Dark background color
-        child: StreamBuilder<Map<String, dynamic>>(
-          stream: _firebaseService.getSensorData(),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return Center(child: CircularProgressIndicator());
-            }
-
-            if (snapshot.hasError) {
-              return Center(child: Text('Error: ${snapshot.error}', style: TextStyle(color: Colors.white)));
-            }
-
-            if (snapshot.hasData) {
-              final data = snapshot.data!;
-              temperature = data['temperature'];
-              ethylene = data['ethylene'];
-
-              return ListView(
-                padding: EdgeInsets.all(16),
-                children: [
-                  _buildThermometer(temperature),
-                  SizedBox(height: 20),
-                  _buildEthyleneSensor(ethylene),
-                ],
-              );
-            }
-
-            return Center(child: Text('No data available', style: TextStyle(color: Colors.white)));
-          },
+      body: SingleChildScrollView(
+        child: Container(
+          color: Colors.black,
+          padding: EdgeInsets.all(16),
+          child: Column(
+            children: [
+              _buildDateHeader(),
+              SizedBox(height: 20),
+              _buildSummaryCard(),
+              SizedBox(height: 20),
+              _buildDetailedSummaryCard(),
+              SizedBox(height: 20),
+              _buildLogsTable(),
+            ],
+          ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildDateHeader() {
+    return Center(
+      child: Text(
+        DateFormat('EEEE, MMMM d, yyyy').format(_selectedDate),
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSummaryCard() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.grey[850],
+        borderRadius: BorderRadius.circular(15),
+      ),
+      padding: EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildGauge('Temperature', _dailySummary['averageTemperature'] ?? 0.0, 100, const Color.fromARGB(255, 129, 179, 255), true),
+          _buildGauge('Ethylene', _dailySummary['averageEthylene'] ?? 0.0, 10, Colors.green, false),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetailedSummaryCard() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.grey[850],
+        borderRadius: BorderRadius.circular(15),
+      ),
+      padding: EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Daily Summary',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          SizedBox(height: 16),
+          _buildSummaryRow('Max Temperature', 
+            '${_dailySummary['maxTemperature']?.toStringAsFixed(1) ?? '0.0'}°F'),
+          _buildSummaryRow('Min Temperature', 
+            '${_dailySummary['minTemperature']?.toStringAsFixed(1) ?? '0.0'}°F'),
+          _buildSummaryRow('Max Ethylene', 
+            '${_dailySummary['maxEthylene']?.toStringAsFixed(1) ?? '0.0'} ppm'),
+          _buildSummaryRow('Min Ethylene', 
+            '${_dailySummary['minEthylene']?.toStringAsFixed(1) ?? '0.0'} ppm'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSummaryRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: TextStyle(color: Colors.white70),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGauge(String label, double value, double maxValue, Color color, bool isTemperature) {
+    return Container(
+      width: double.infinity,  // Make the gauge container take the full width
+      height: 200, // Adjust the height to fit the gauge properly
+      child: Column(
+        children: [
+          Text(
+            label,
+            style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
+          ),
+          Expanded(
+            child: SfRadialGauge(
+              axes: <RadialAxis>[
+                RadialAxis(
+                  minimum: 0,
+                  maximum: maxValue,
+                  showLabels: false,
+                  showTicks: false,
+                  axisLineStyle: AxisLineStyle(
+                    thickness: 0.2,
+                    color: color.withOpacity(0.5),
+                    thicknessUnit: GaugeSizeUnit.factor,
+                  ),
+                  pointers: <GaugePointer>[
+                    RangePointer(
+                      value: value,
+                      width: 0.2,
+                      sizeUnit: GaugeSizeUnit.factor,
+                      color: color,
+                    ),
+                    NeedlePointer(
+                      value: value,
+                      needleLength: 0.8,
+                      lengthUnit: GaugeSizeUnit.factor,
+                      needleColor: color,
+                      knobStyle: KnobStyle(
+                        color: color,
+                        sizeUnit: GaugeSizeUnit.factor,
+                        knobRadius: 0.05,
+                      ),
+                    ),
+                  ],
+                  annotations: <GaugeAnnotation>[
+                    GaugeAnnotation(
+                      widget: Container(
+                        child: Text(
+                          value.toStringAsFixed(1),
+                          style: TextStyle(fontSize: 16, color: Colors.white),
+                        ),
+                      ),
+                      angle: 90,
+                      positionFactor: 0.5,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLogsTable() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.grey[850],
+        borderRadius: BorderRadius.circular(15),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Text(
+              'Detailed Logs',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          _logs.isEmpty
+            ? Padding(
+                padding: const EdgeInsets.all(16),
+                child: Center(
+                  child: Text(
+                    'No logs available for this date',
+                    style: TextStyle(color: Colors.white70),
+                  ),
+                ),
+              )
+            : SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: DataTable(
+                  columnSpacing: 16,
+                  headingRowColor: MaterialStateColor.resolveWith(
+                    (states) => Colors.grey[800]!
+                  ),
+                  columns: [
+                    DataColumn(
+                      label: Text(
+                        'Time',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                    DataColumn(
+                      label: Text(
+                        'Temperature',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                    DataColumn(
+                      label: Text(
+                        'Ethylene',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ],
+                  rows: _logs.map((log) {
+                    return DataRow(
+                      cells: [
+                        DataCell(Text(
+                          log['time'] ?? 'N/A', 
+                          style: TextStyle(color: Colors.white),
+                        )),
+                        DataCell(Text(
+                          '${log['temperature']?.toStringAsFixed(1) ?? 'N/A'}°F', 
+                          style: TextStyle(color: Colors.white),
+                        )),
+                        DataCell(Text(
+                          log['ethylene']?.toStringAsFixed(1) ?? 'N/A', 
+                          style: TextStyle(color: Colors.white),
+                        )),
+                      ],
+                    );
+                  }).toList(),
+                ),
+              ),
+        ],
       ),
     );
   }
