@@ -15,14 +15,15 @@ Future<void> _initializeFirebase() async {
   try {
     if (Firebase.apps.isEmpty) {
       await Firebase.initializeApp(
-        name: 'frostfresh',
+        name: 'frostFresh',
         options: FirebaseOptions(
-          apiKey: "AIzaSyDtTtKcyvDlBdLze4qytggyC0GsIPQZB4k",
-          authDomain: "frostfresh-7de8e.firebaseapp.com", 
-          databaseURL: "https://frostfresh-7de8e-default-rtdb.asia-southeast1.firebasedatabase.app", // Replace with your Firebase Realtime Database URL
-          projectId: "frostfresh-7de8e", // Replace with your project ID
-          messagingSenderId: "705174620428", // Replace with your messagingSenderId
-          appId: "1:705174620428:web:81ade7ebdfc887a5096129", // Replace with your app ID
+           apiKey: "AIzaSyDtTtKcyvDlBdLze4qytggyC0GsIPQZB4k",
+           authDomain: "frostfresh-7de8e.firebaseapp.com",
+           databaseURL: "https://frostfresh-7de8e-default-rtdb.asia-southeast1.firebasedatabase.app",
+           projectId: "frostfresh-7de8e",
+           storageBucket: "frostfresh-7de8e.firebasestorage.app",
+           messagingSenderId: "705174620428",
+           appId: "1:705174620428:web:81ade7ebdfc887a5096129"
         ),
       );
       print('Firebase initialized');
