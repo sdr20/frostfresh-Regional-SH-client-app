@@ -51,6 +51,7 @@ android {
 dependencies {
     implementation platform("com.google.firebase:firebase-bom:33.7.0")
     implementation "androidx.multidex:multidex:2.0.1" // For multidex support if needed
+    implementation "com.google.android.play:core:1.10.3" // Add the Play Core library
 
     // Add Firebase dependencies as needed
     // Example: implementation "com.google.firebase:firebase-analytics-ktx"

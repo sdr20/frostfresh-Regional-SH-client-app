@@ -120,7 +120,7 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildGauge('Temperature', _temperature, 100, const Color.fromARGB(255, 129, 179, 255), true),
+          _buildGauge('Temperature °F', _temperature, 100, const Color.fromARGB(255, 129, 179, 255), true),
           _buildEthyleneGauge('Ethylene', _ethylene, 400, Colors.green),
         ],
       ),
