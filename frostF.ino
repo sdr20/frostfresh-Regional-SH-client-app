@@ -1,14 +1,14 @@
 #include <WiFi.h>
 #include <WiFiManager.h>
-#include <Firebase_ESP_Client.h> // Updated Firebase library
+#include <Firebase_ESP_Client.h>
 #include <OneWire.h>
 #include <DallasTemperature.h>
 #include "addons/TokenHelper.h"
 #include "addons/RTDBHelper.h"
 
 // Firebase credentials
-#define DATABASE_URL "https://frostfresh-7de8e-default-rtdb.asia-southeast1.firebasedatabase.app/"
-#define API_KEY "AIzaSyCngMKmeOiCCKomLoPXbVW_SVEi0sQeUIA"
+#define FIREBASE_HOST "https://frostfresh-7de8e-default-rtdb.asia-southeast1.firebasedatabase.app"
+#define FIREBASE_API_KEY "AIzaSyCngMKmeOiCCKomLoPXbVW_SVEi0sQeUIA"
 
 // DS18B20 Temperature Sensor Configuration
 #define ONE_WIRE_BUS 4
@@ -24,7 +24,7 @@ bool relayState = false;
 
 // Firebase objects
 FirebaseData fbdo;
-FirebaseAuth auth;  // Create an empty FirebaseAuth object
+FirebaseAuth auth;
 FirebaseConfig config;
 
 // Status flag for Firebase sign-up or initialization
@@ -44,18 +44,24 @@ float readTemperature() {
 // Function to read ethylene level from MQ-2
 float readEthylene() {
   int sensorValue = analogRead(MQ2_SENSOR_PIN);
+  // Adjust the sensitivity calculation based on calibration
   float ethylenePPM = (sensorValue / 4095.0) * 100.0; 
+  
+  // Apply calibration factor (adjust based on your calibration)
+  float calibrationFactor = 1.2; // Example calibration factor
+  ethylenePPM *= calibrationFactor;
+
   return ethylenePPM;
 }
 
 // Function to control relay based on temperature
 void controlRelay(float temperature) {
   if (temperature > 43.0 && !relayState) {
-    digitalWrite(RELAY_PIN, HIGH); // Turn relay ON
+    digitalWrite(RELAY_PIN, LOW); // Turn relay ON
     relayState = true;
     Serial.println("Relay ON: Temperature exceeded 43°F");
   } else if (temperature < 35.0 && relayState) {
-    digitalWrite(RELAY_PIN, LOW); // Turn relay OFF
+    digitalWrite(RELAY_PIN, HIGH); // Turn relay OFF
     relayState = false;
     Serial.println("Relay OFF: Temperature dropped below 35°F");
   }
@@ -106,18 +112,20 @@ void setup() {
   Serial.println("IP Address: " + WiFi.localIP().toString());
 
   // Firebase configuration
-  config.api_key = API_KEY;
-  config.database_url = DATABASE_URL;
+  config.api_key = FIREBASE_API_KEY;
+  config.database_url = FIREBASE_HOST;
 
   // Initialize Firebase with both config and auth
   Firebase.begin(&config, &auth);
 
-  if (Firebase.ready()) {
+  Serial.println("Signing in anonymously...");
+  if (Firebase.signUp(&config, &auth, "", "")) {
     signUpOK = true; // Set flag to true if Firebase initializes successfully
     Serial.println("Firebase initialized successfully");
   } else {
     signUpOK = false; // Set flag to false if Firebase fails to initialize
     Serial.println("Failed to initialize Firebase");
+    Serial.println("Error: " + String(config.signer.signupError.message.c_str()));
   }
 
   // Initialize DS18B20 sensor
